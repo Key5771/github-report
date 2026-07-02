@@ -1,0 +1,19 @@
+# 의존성
+node_modules/
+
+# 환경변수 / 시크릿 (토큰!)
+.env
+.env.*
+
+# Expo / RN
+.expo/
+dist/
+web-build/
+ios/
+android/
+
+# macOS / 로그 / IDE
+.DS_Store
+*.log
+.vscode/
+.idea/
