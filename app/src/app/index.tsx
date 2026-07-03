@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View} from 'react-native'
+import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native'
 
 // SwiftUI의 struct 처럼, 받아올 데이터 모양을 타입으로 정의
 type Report = {
@@ -15,14 +15,30 @@ export default function Index() {
   const [report, setReport] = useState<Report | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  // fetch 로직을 재사용 가능한 함수로 분리
+  const loadReport = async () => {
+    try {
+      const res = await fetch('http://localhost:3001/report')
+      const data = await res.json()
+      setReport(data)
+      setError(null)
+    } catch (e) {
+      setError(String(e))
+    }
+  }
+
+  // 당겨서 새로고침: 당김 인디케이터만 돌리며 fetch
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await loadReport()
+    setRefreshing(false)
+  }
 
   // 화면 처음 뜰 때 1번 실행 (SwiftUI의 .task {} 느낌)
   useEffect(() => {
-    fetch('http://localhost:3001/report')
-      .then((res) => res.json())
-      .then((data) => setReport(data))
-      .catch((e) => setError(String(e)))
-      .finally(() => setLoading(false))
+    loadReport().finally(() => setLoading(false))
   }, [])
 
   // 상태에 따라 다른 화면 (if/else로 분기)
@@ -43,7 +59,12 @@ export default function Index() {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView 
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <Text style={styles.title}>📊 이번 주 GitHub 활동</Text>
 
       <View style={styles.row}>
