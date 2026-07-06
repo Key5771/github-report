@@ -4,6 +4,7 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} 
 // SwiftUI의 struct 처럼, 받아올 데이터 모양을 타입으로 정의
 type Report = {
   totalContributions: number,
+  currentStreak: number,
   commits: number,
   pullRequests: number,
   reviews: number,
@@ -67,6 +68,12 @@ export default function Index() {
     >
       <Text style={styles.title}>📊 이번 주 GitHub 활동</Text>
 
+      <View style={styles.streakCard}>
+        <Text style={styles.streakEmoji}>🔥</Text>
+        <Text style={styles.streakValue}>{report!.currentStreak}일</Text>
+        <Text style={styles.streakLabel}>연속 커밋</Text>
+      </View>
+
       <View style={styles.row}>
         <Stat label="총 기여" value={report!.totalContributions} />
         <Stat label="커밋" value={report!.commits} />
@@ -113,4 +120,14 @@ const styles = StyleSheet.create({
   },
   repoName: { fontSize: 16 },
   repoCommits: { fontSize: 14, color: '#888' },
+  streakCard: {
+    backgroundColor: '#fff5eb',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  streakEmoji: { fontSize: 32 },
+  streakValue: { fontSize: 32, fontWeight: 'bold', color: '#ff6b35', marginTop: 4 },
+  streakLabel: { fontSize: 14, color: '#666', marginTop: 4 },
 })
