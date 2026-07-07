@@ -5,7 +5,7 @@ import { serve } from '@hono/node-server'
 const app = new Hono()
 
 const QUERY = `
-  query($login: String!, $from: DateTime!, $to: DateTime!, $streakFrom: DateTime!) {
+  query($login: String!, $from: DateTime!, $to: DateTime!, $streakFrom: DateTime!, , $prevFrom: DateTime!) {
     user(login: $login) {
       weekly: contributionsCollection(from: $from, to: $to) {
         totalCommitContributions
@@ -18,6 +18,10 @@ const QUERY = `
           contributions { totalCount }
         }
       }
+      lastweek: contributionsCollection(from: $prevFrom, to: $from) {
+        totalCommitContributions
+        contributionCalendar { totalContributions }
+      }
       streak: contributionsCollection(from: $streakFrom, to: $to) {
         contributionCalendar {
           weeks {
@@ -28,6 +32,15 @@ const QUERY = `
     }
   }
 `
+
+// 증감 방향을 세 가지로만 제한하는 타입
+type Trend = 'up' | 'down' | 'same'
+
+function getTrend(delta: number): Trend {
+  if (delta > 0) return 'up'
+  if (delta < 0) return 'down'
+  return 'same'
+}
 
 // 일별 데이터를 받아 "오늘부터 며칠 연속 커밋했나" 계산
 function calculateStreak(weeks: { contributionDays: { date: string; contributionCount: number }[] }[]): number {
@@ -60,6 +73,7 @@ app.get('/report', async (c) => {
   const login = process.env.GITHUB_USER!
   const to = new Date()
   const from = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 지난 7일
+  const prevFrom = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) // 지난 14일
   const streakFrom = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) // 지난 1년
 
   // 1. GitHub에서 가져오기
@@ -76,6 +90,7 @@ app.get('/report', async (c) => {
         from: from.toISOString(), 
         to: to.toISOString(), 
         streakFrom: streakFrom.toISOString(),
+        prevFrom: prevFrom.toISOString(),
       },
     }),
   })
@@ -83,6 +98,7 @@ app.get('/report', async (c) => {
 
   const user = json.data.user
   const cc = user.weekly
+  const commitDelta = cc.totalCommitContributions - user.lastweek.totalCommitContributions
   const currentStreak = calculateStreak(user.streak.contributionCalendar.weeks)
 
   // 2. 가공 — 가장 활발했던 repo 찾기
@@ -100,6 +116,11 @@ app.get('/report', async (c) => {
     reviews: cc.totalPullRequestReviewContributions,
     issues: cc.totalIssueContributions,
     topRepos: repos.slice(0, 3),
+    weekOverWeek: {
+      commitDelta,
+      trend: getTrend(commitDelta),
+      lastWeekCommits: user.lastweek.totalCommitContributions,
+    }
   })
 })
 
