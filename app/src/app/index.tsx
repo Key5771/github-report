@@ -82,7 +82,12 @@ export default function Index() {
 
       <View style={styles.row}>
         <Stat label="총 기여" value={report!.totalContributions} />
-        <Stat label="커밋" value={report!.commits} />
+        <Stat 
+          label="커밋"
+          value={report!.commits}
+          delta={report!.weekOverWeek.commitDelta}
+          trend={report!.weekOverWeek.trend}
+        />
         <Stat label="PR" value={report!.pullRequests} />
       </View>
 
@@ -98,11 +103,26 @@ export default function Index() {
 }
 
 // 작은 재사용 컴포넌트 (SwiftUI의 서브 View처럼)
-function Stat({ label, value}: { label: string; value: number }) {
+function Stat({ 
+  label, 
+  value, 
+  delta, 
+  trend 
+}: { 
+  label: string; 
+  value: number
+  delta?: number
+  trend?: 'up' | 'down' | 'same' 
+}) {
   return (
     <View style={styles.stat}>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
+      {delta !== undefined && trend && trend !== 'same' && (
+        <Text style={[styles.delta, trend === 'up' ? styles.deltaUp : styles.deltaDown]}>
+          {trend === 'up' ? '🔼' : '🔽'} {delta > 0 ? `+${delta}` : delta}
+        </Text>
+      )}
     </View>
   )
 }
@@ -136,4 +156,11 @@ const styles = StyleSheet.create({
   streakEmoji: { fontSize: 32 },
   streakValue: { fontSize: 32, fontWeight: 'bold', color: '#ff6b35', marginTop: 4 },
   streakLabel: { fontSize: 14, color: '#666', marginTop: 4 },
+  delta: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  deltaUp: { color: '#22c55e' },    // 상승 - 초록
+  deltaDown: { color: '#ef4444' },  // 하락 - 빨강
 })
