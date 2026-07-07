@@ -8,7 +8,13 @@ type Report = {
   commits: number,
   pullRequests: number,
   reviews: number,
+  issues: number,
   topRepos: { name: string; commits: number }[]
+  weekOverWeek: {
+    commitDelta: number
+    trend: 'up' | 'down' | 'same'
+    lastWeekCommits: number
+  }
 }
 
 export default function Index() {
