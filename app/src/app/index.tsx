@@ -1,21 +1,8 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View} from 'react-native'
-
-// SwiftUI의 struct 처럼, 받아올 데이터 모양을 타입으로 정의
-type Report = {
-  totalContributions: number,
-  currentStreak: number,
-  commits: number,
-  pullRequests: number,
-  reviews: number,
-  issues: number,
-  topRepos: { name: string; commits: number }[]
-  weekOverWeek: {
-    commitDelta: number
-    trend: 'up' | 'down' | 'same'
-    lastWeekCommits: number
-  }
-}
+import Stat from '../components/Stat'
+import { fetchReport } from '../api'
+import type { Report } from '../types'
 
 export default function Index() {
   // @State 3개: 데이터 / 로딩중 / 에러
@@ -27,8 +14,7 @@ export default function Index() {
   // fetch 로직을 재사용 가능한 함수로 분리
   const loadReport = async () => {
     try {
-      const res = await fetch('http://localhost:3001/report')
-      const data = await res.json()
+      const data = await fetchReport()
       setReport(data)
       setError(null)
     } catch (e) {
@@ -99,31 +85,6 @@ export default function Index() {
         </View>
       ))}
     </ScrollView>
-  )
-}
-
-// 작은 재사용 컴포넌트 (SwiftUI의 서브 View처럼)
-function Stat({ 
-  label, 
-  value, 
-  delta, 
-  trend 
-}: { 
-  label: string; 
-  value: number
-  delta?: number
-  trend?: 'up' | 'down' | 'same' 
-}) {
-  return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-      {delta !== undefined && trend && trend !== 'same' && (
-        <Text style={[styles.delta, trend === 'up' ? styles.deltaUp : styles.deltaDown]}>
-          {trend === 'up' ? '🔼' : '🔽'} {delta > 0 ? `+${delta}` : delta}
-        </Text>
-      )}
-    </View>
   )
 }
 
